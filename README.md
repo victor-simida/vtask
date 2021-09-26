@@ -12,7 +12,7 @@
 
 ### 使用Register方法来注册异步任务
 
-```
+```go
     type input struct {
         Input string
     }
@@ -43,7 +43,7 @@
 
 ### 使用InvokeAsyncJob方法来启动异步任务
 
-```
+```go
 	resp, err := GlobalJobCenter.InvokeAsyncJob(context.TODO(),
         &schema.InvokeAsyncJobReq{
             JobName:   "test_job",

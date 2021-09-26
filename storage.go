@@ -28,7 +28,7 @@ type JobStorage interface {
 	// GetByID 获取某个id下的任务信息
 	GetByID(id int64) (*schema.SbsJobInfo, error)
 
-	// GetByIDs 获取某些id对应的x任务信息
+	// GetByIDs 获取某些id对应的任务信息
 	GetByIDs(ids []int64) ([]schema.SbsJobInfo, error)
 
 	// FetchEmployeeByKeyword 获取指定的employee
