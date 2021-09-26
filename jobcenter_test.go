@@ -23,7 +23,7 @@ var failCallback = func(e interface{}) {
 }
 
 type commonInfo struct {
-	RequestId string `json:"RequestId"`
+	RequestID string `json:"RequestID"`
 }
 
 func init() {
@@ -35,7 +35,7 @@ func init() {
 		{
 			H: func(ctx context.Context, req interface{}) (interface{}, error) {
 				input := req.(*commonInfo)
-				input.RequestId += "1"
+				input.RequestID += "1"
 				fmt.Println(input)
 				return input, nil
 			},
@@ -45,7 +45,7 @@ func init() {
 		{
 			H: func(ctx context.Context, req interface{}) (interface{}, error) {
 				input := req.(*commonInfo)
-				input.RequestId += "2"
+				input.RequestID += "2"
 				fmt.Println(input)
 				return input, nil
 			},
@@ -58,7 +58,7 @@ func init() {
 		{
 			H: func(ctx context.Context, req interface{}) (interface{}, error) {
 				input := req.(*commonInfo)
-				input.RequestId += "1"
+				input.RequestID += "1"
 				fmt.Println(input)
 				return input, nil
 			},
@@ -68,9 +68,9 @@ func init() {
 		{
 			H: func(ctx context.Context, req interface{}) (interface{}, error) {
 				input := req.(*commonInfo)
-				input.RequestId += "2"
+				input.RequestID += "2"
 				fmt.Println("job failed")
-				return input, StopJobError
+				return input, ErrStopJob
 			},
 			RetryTimes:  JustOnce,
 			RetryPeriod: time.Second,
@@ -89,7 +89,7 @@ func init() {
 		},
 	}, succCallback, failCallback)
 
-	GlobalJobCenter.Start("127.0.0.1:1234")
+	go GlobalJobCenter.Start("127.0.0.1:1234")
 }
 
 type mockRow struct {
@@ -198,14 +198,14 @@ func TestJobFail(t *testing.T) {
 	list, err := GlobalStorage.GetNeedWorkEmployees(time.Now(), time.Now())
 	assert.Nil(t, err)
 	assert.Equal(t, 0, len(list))
-	assert.Equal(t, &commonInfo{RequestId: "12"}, e.resp)
+	assert.Equal(t, &commonInfo{RequestID: "12"}, e.resp)
 }
 func TestJobDoing(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	e, err := GlobalJobCenter.NewEmployee("", "test_job_always_fail", "")
 	assert.Nil(t, err)
-	GlobalStorage.Record(context.TODO(), e)
+	_, _ = GlobalStorage.Record(context.TODO(), e)
 	go e.Do()
 
 	select {
@@ -253,14 +253,6 @@ func TestContext(t *testing.T) {
 	}
 
 }
-
-func TestContext2(t *testing.T) {
-	ctx := context.WithValue(context.Background(), 1, 1)
-	fmt.Println(ctx.Value(1)) // 1
-	ctx2 := context.WithValue(ctx, 2, 2)
-	fmt.Println(ctx2.Value(1)) // 1
-	fmt.Println(ctx2.Value(2)) // 2
-}
 func TestContext3(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.Background(), time.Second)
 	context.TODO()
@@ -276,7 +268,7 @@ func TestInvokeAsyncJob(t *testing.T) {
 	resp, err := GlobalJobCenter.InvokeAsyncJob(context.TODO(),
 		&schema.InvokeAsyncJobReq{
 			JobName:   "test_job",
-			InputData: `{"RequestId":"test"}`,
+			InputData: `{"RequestID":"test"}`,
 			Keyword:   "uuid1",
 		})
 	assert.Nil(t, err)

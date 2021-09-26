@@ -30,10 +30,13 @@ const (
 
 )
 
-// CtxJobId context中key定义
+// CtxType ...
+type CtxType string
+
+// CtxJobID context中key定义
 const (
-	CtxJobId  = "CtxJobId" // 上下文 JobId
-	CtxLogger = "CtxLogger"
+	CtxJobID  CtxType = "CtxJobID" // 上下文 JobId
+	CtxLogger CtxType = "CtxLogger"
 )
 
 // StepStatus ...
@@ -58,10 +61,9 @@ var GlobalJobCenter = NewJobCenter()
 
 // 错误定义
 var (
-	NoSuchJob            = fmt.Errorf("no such job")         // NoSuchJob jd没有发布
-	StopJobError         = fmt.Errorf("job is failed")       // StopJobError 停止任务error，返回此error即可不再运行task
-	retryReachLimitError = fmt.Errorf("retry reach limit")   // retryReachLimitError 任务重试超限
-	JobCenterNoWorkJob   = fmt.Errorf("job center not work") // 不再产生新的job
+	ErrNoSuchJob          = fmt.Errorf("no such job")         // ErrNoSuchJob jd没有发布
+	ErrStopJob            = fmt.Errorf("job is failed")       // ErrStopJob 停止任务error，返回此error即可不再运行task
+	ErrJobCenterNoWorkJob = fmt.Errorf("job center not work") // 不再产生新的job
 )
 
 // NewJobCenter 人才招聘会，负责招募员工执行任务
@@ -151,7 +153,7 @@ func (c *JobCenter) Start(host string) {
 func (c *JobCenter) NewEmployee(keyword, name, input string) (*Employee, error) {
 	select {
 	case <-c.ctx.Done():
-		return nil, JobCenterNoWorkJob
+		return nil, ErrJobCenterNoWorkJob
 	default:
 	}
 	var e Employee
@@ -163,7 +165,7 @@ func (c *JobCenter) NewEmployee(keyword, name, input string) (*Employee, error) 
 
 	jd, ok := c.m[name]
 	if !ok {
-		return nil, NoSuchJob
+		return nil, ErrNoSuchJob
 	}
 	e.job = &jd
 	e.step = 1
@@ -179,7 +181,7 @@ func (c *JobCenter) NewEmployee(keyword, name, input string) (*Employee, error) 
 	e.ctx, e.cancel = context.WithCancel(c.ctx)
 	e.requestLog = Logger.With(zap.String("jobId", e.jobID))
 
-	e.ctx = context.WithValue(e.ctx, CtxJobId, e.id)
+	e.ctx = context.WithValue(e.ctx, CtxJobID, e.id)
 	e.ctx = context.WithValue(e.ctx, CtxLogger, e.requestLog)
 	return &e, nil
 }
@@ -203,14 +205,14 @@ func (c *JobCenter) InvokeAsyncJob(ctx context.Context,
 		return nil, err
 	}
 
-	flowId, err := GlobalStorage.Put(ctx, e)
+	flowID, err := GlobalStorage.Put(ctx, e)
 	if err != nil {
 		return nil, err
 	}
 
 	resp := new(schema.InvokeAsyncJobResp)
 	resp.JobID = e.jobID
-	resp.FlowID = flowId
+	resp.FlowID = flowID
 	return resp, nil
 }
 

@@ -71,7 +71,7 @@ func (e *Employee) Do() {
 
 			e.requestLog.With(zap.Error(err)).Infof("do_returns_%v_%+v", i,
 				resp)
-			if e.err != nil && e.err != StopJobError {
+			if e.err != nil && e.err != ErrStopJob {
 				e.requestLog.With(zap.Error(err)).Infof("step_error_%v", i)
 				// 重试
 				if s.RetryTimes == AlwaysRetry || retryTimes < s.RetryTimes {
@@ -83,7 +83,7 @@ func (e *Employee) Do() {
 				cannotRetry = true
 			}
 
-			if cannotRetry || err == StopJobError {
+			if cannotRetry || err == ErrStopJob {
 				e.status = schema.StatusFail
 				e.Record(resp)
 				e.requestLog.With(zap.Error(err)).Error("failed")
@@ -91,11 +91,11 @@ func (e *Employee) Do() {
 					e.job.FailCallback(e.input)
 				}
 				return
-			} else {
-				e.step++
-				e.Record(resp)
-				break
 			}
+
+			e.step++
+			e.Record(resp)
+			break
 		}
 	}
 	e.status = schema.StatusSuccess

@@ -67,7 +67,7 @@ func (store *storage) Put(ctx context.Context, e *Employee) (int64, error) {
 		Input:     e.inputString(),
 	}
 
-	insertId, err := db.CreateJobs(ctx, &j, store.host)
+	insertID, err := db.CreateJobs(ctx, &j, store.host)
 	if err != nil {
 		if strings.Contains(strings.ToLower(err.Error()), "duplicate") {
 			info, err := store.Get(ctx, e.jobID)
@@ -80,7 +80,7 @@ func (store *storage) Put(ctx context.Context, e *Employee) (int64, error) {
 		}
 	}
 
-	return insertId, nil
+	return insertID, nil
 }
 
 // GetNeedWorkEmployees ...

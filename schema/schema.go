@@ -29,11 +29,13 @@ type InvokeAsyncJobReq struct {
 	InputData string `json:"InputData"`
 	Keyword   string `json:"Keyword"`
 }
+
 // InvokeAsyncJobResp ...
 type InvokeAsyncJobResp struct {
 	JobID  string `json:"JobID"`
 	FlowID int64  `json:"FlowID"`
 }
+
 // GetAsyncJobsReq ...
 type GetAsyncJobsReq struct {
 	Keyword string `json:"Keyword"`
@@ -45,6 +47,7 @@ type GetAsyncJobsReq struct {
 type GetAsyncJobsResp struct {
 	List []SbsJobInfo `json:"List"`
 }
+
 // RestartJobReq ...
 type RestartJobReq struct {
 	KeyWord string `json:"KeyWord"`
