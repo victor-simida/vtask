@@ -8,6 +8,22 @@ import (
 	"vtask/schema"
 )
 
+/* 对应数据库表定义如下:
+CREATE TABLE `task` (
+`id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+`uuid` varchar(64) NOT NULL DEFAULT '',
+`name` varchar(64) NOT NULL DEFAULT '',
+`step` int(11) NOT NULL,
+`status` int(11) NOT NULL DEFAULT '0',
+`responses` text NOT NULL,
+`input` text NOT NULL,
+`host` varchar(64) NOT NULL DEFAULT '',
+`create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+`update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (`id`),
+UNIQUE KEY `uidx_uuid` (`uuid`),
+KEY `idx_host_status` (`host`,`status`)
+*/
 var db *gorm.DB
 
 // SetDataBase ...

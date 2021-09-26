@@ -13,7 +13,7 @@ type input struct {
 }
 
 func init() {
-	vtask.GlobalJobCenter.PostJobDescribe("test_job", &input{},
+	vtask.GlobalJobCenter.Register("test_job", &input{},
 		[]vtask.Step{
 			{
 				// 在这里定义执行该步骤执行的函数

@@ -31,7 +31,7 @@ func init() {
 	ms.m = make(map[string]mockRow)
 	GlobalStorage = ms
 
-	GlobalJobCenter.PostJobDescribe("test_job", &commonInfo{}, []Step{
+	GlobalJobCenter.Register("test_job", &commonInfo{}, []Step{
 		{
 			H: func(ctx context.Context, req interface{}) (interface{}, error) {
 				input := req.(*commonInfo)
@@ -54,7 +54,7 @@ func init() {
 		},
 	}, succCallback, failCallback)
 
-	GlobalJobCenter.PostJobDescribe("test_job_fail", &commonInfo{}, []Step{
+	GlobalJobCenter.Register("test_job_fail", &commonInfo{}, []Step{
 		{
 			H: func(ctx context.Context, req interface{}) (interface{}, error) {
 				input := req.(*commonInfo)
@@ -76,7 +76,7 @@ func init() {
 			RetryPeriod: time.Second,
 		},
 	}, succCallback, failCallback)
-	GlobalJobCenter.PostJobDescribe("test_job_always_fail", &commonInfo{}, []Step{
+	GlobalJobCenter.Register("test_job_always_fail", &commonInfo{}, []Step{
 		{
 			H: func(ctx context.Context, req interface{}) (interface{}, error) {
 				input := req.(*commonInfo)
@@ -88,6 +88,8 @@ func init() {
 			RetryPeriod: time.Second,
 		},
 	}, succCallback, failCallback)
+
+	GlobalJobCenter.Start("127.0.0.1:1234")
 }
 
 type mockRow struct {
@@ -198,7 +200,6 @@ func TestJobFail(t *testing.T) {
 	assert.Equal(t, 0, len(list))
 	assert.Equal(t, &commonInfo{RequestId: "12"}, e.resp)
 }
-
 func TestJobDoing(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -271,15 +272,15 @@ func TestContext3(t *testing.T) {
 	}
 }
 
-func alwaysLock(rw *sync.RWMutex) {
-	rw.Lock()
-	go func() {
-		time.Sleep(time.Second)
-		rw.Unlock()
-	}()
-
-	time.Sleep(500 * time.Millisecond)
-	go alwaysLock(rw)
+func TestInvokeAsyncJob(t *testing.T) {
+	resp, err := GlobalJobCenter.InvokeAsyncJob(context.TODO(),
+		&schema.InvokeAsyncJobReq{
+			JobName:   "test_job",
+			InputData: `{"RequestId":"test"}`,
+			Keyword:   "uuid1",
+		})
+	assert.Nil(t, err)
+	assert.Equal(t, "uuid1", resp.JobID)
 }
 
 func TestRwlock(t *testing.T) {
