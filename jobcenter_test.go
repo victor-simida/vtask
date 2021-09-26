@@ -208,9 +208,7 @@ func TestJobDoing(t *testing.T) {
 	_, _ = GlobalStorage.Record(context.TODO(), e)
 	go e.Do()
 
-	select {
-	case <-ctx.Done():
-	}
+	<-ctx.Done()
 	assert.Equal(t, schema.StatusRunning, e.status)
 	assert.Equal(t, 1, e.step)
 	fmt.Println(ms.m)
@@ -235,8 +233,8 @@ func TestContext(t *testing.T) {
 
 	ctx, cancel = context.WithCancel(context.Background())
 	ctx2, cancel2 = context.WithCancel(ctx)
-
 	cancel() // cancel掉父context
+	cancel2()
 
 	select {
 	case <-ctx.Done(): // 父context已经done掉
@@ -254,14 +252,14 @@ func TestContext(t *testing.T) {
 
 }
 func TestContext3(t *testing.T) {
-	ctx, _ := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
 	context.TODO()
-	ctx2, _ := context.WithTimeout(ctx, 2*time.Second)
+	ctx2, cancel2 := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel2()
 	now := time.Now()
-	select {
-	case <-ctx2.Done():
-		fmt.Println(time.Since(now)) // 1s
-	}
+	<-ctx2.Done()
+	fmt.Println(time.Since(now)) // 1s
 }
 
 func TestInvokeAsyncJob(t *testing.T) {
