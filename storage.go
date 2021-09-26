@@ -1,4 +1,4 @@
-package asyncsbsjob
+package vtask
 
 import (
 	"context"
@@ -34,6 +34,7 @@ type JobStorage interface {
 	// FetchEmployeeByKeyword 获取指定的employee
 	FetchEmployeeByKeyword(keyword string) (*Employee, error)
 
+	// UpdateRestartInfo 更新指定keyword对应任务的当前执行步骤，用于重启任务
 	UpdateRestartInfo(keyword string, step int32) error
 }
 

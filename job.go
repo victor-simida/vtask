@@ -1,4 +1,4 @@
-package asyncsbsjob
+package vtask
 
 import (
 	"context"
@@ -47,7 +47,8 @@ type JobCenter struct {
 	m      map[string]JobDescribe
 	host   string // host 宿主唯一标识，使用ip+port的方式进行区分
 
-	wg *sync.WaitGroup
+	loadTaskPeriod int // 轮询拉起异步任务周期
+	wg             *sync.WaitGroup
 }
 
 // GlobalJobCenter ...
@@ -71,7 +72,7 @@ func NewJobCenter() *JobCenter {
 }
 
 // PostJobDescribe 发布jd
-func (jc *JobCenter) PostJobDescribe(name string, input interface{}, steps []Step, succCB, failCB Callback) {
+func (c *JobCenter) PostJobDescribe(name string, input interface{}, steps []Step, succCB, failCB Callback) {
 	// input必须为指针
 	if reflect.ValueOf(input).Kind() != reflect.Ptr {
 		panic("post_a_job_describe_input_must_be_pointer")
@@ -89,7 +90,7 @@ func (jc *JobCenter) PostJobDescribe(name string, input interface{}, steps []Ste
 	temp.JobName = name
 	temp.SuccessCallback = succCB
 	temp.FailCallback = failCB
-	jc.m[name] = temp
+	c.m[name] = temp
 }
 
 // JobDescribe step by step job,有步骤的任务
@@ -116,18 +117,18 @@ type StepHandler func(ctx context.Context, req interface{}) (interface{}, error)
 type Callback func(interface{})
 
 // Start ...
-func (jc *JobCenter) Start(host string) {
-	jc.host = host
+func (c *JobCenter) Start(host string) {
+	c.host = host
 	// 等待一分钟才开始异步任务，避免同一个任务同时被两个node执行
 	ticker := time.NewTimer(time.Minute)
 	var from, to time.Time
 	for {
 		select {
-		case <-jc.ctx.Done():
+		case <-c.ctx.Done():
 			return
 		case <-ticker.C:
 			to = time.Now()
-			ticker.Reset(time.Duration(GlobalConfig.LoadTaskPeriod) * time.
+			ticker.Reset(time.Duration(c.loadTaskPeriod) * time.
 				Second)
 			list, err := GlobalStorage.GetNeedWorkEmployees(from, to)
 			if err != nil {
@@ -145,9 +146,9 @@ func (jc *JobCenter) Start(host string) {
 }
 
 // NewEmployee ...
-func (jc *JobCenter) NewEmployee(keyword, name, input string) (*Employee, error) {
+func (c *JobCenter) NewEmployee(keyword, name, input string) (*Employee, error) {
 	select {
-	case <-jc.ctx.Done():
+	case <-c.ctx.Done():
 		return nil, JobCenterNoWorkJob
 	default:
 	}
@@ -158,7 +159,7 @@ func (jc *JobCenter) NewEmployee(keyword, name, input string) (*Employee, error)
 		e.jobID = keyword
 	}
 
-	jd, ok := jc.m[name]
+	jd, ok := c.m[name]
 	if !ok {
 		return nil, NoSuchJob
 	}
@@ -172,8 +173,8 @@ func (jc *JobCenter) NewEmployee(keyword, name, input string) (*Employee, error)
 		}
 	}
 
-	e.wg = jc.wg
-	e.ctx, e.cancel = context.WithCancel(jc.ctx)
+	e.wg = c.wg
+	e.ctx, e.cancel = context.WithCancel(c.ctx)
 	e.requestLog = Logger.With(zap.String("jobId", e.jobID))
 
 	e.ctx = context.WithValue(e.ctx, CtxJobId, e.id)
@@ -182,7 +183,7 @@ func (jc *JobCenter) NewEmployee(keyword, name, input string) (*Employee, error)
 }
 
 // Destroy 实现热重启方法
-func (jc *JobCenter) Destroy() {
-	jc.cancel()
-	jc.wg.Wait()
+func (c *JobCenter) Destroy() {
+	c.cancel()
+	c.wg.Wait()
 }

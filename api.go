@@ -1,4 +1,4 @@
-package asyncsbsjob
+package vtask
 
 import (
 	"context"
@@ -9,15 +9,15 @@ import (
 	"github.com/google/uuid"
 )
 
-// InvokeAsyncJob ...
-func (jc *JobCenter) InvokeAsyncJob(ctx context.Context,
+// InvokeAsyncJob 用于启动异步任务
+func (c *JobCenter) InvokeAsyncJob(ctx context.Context,
 	req *schema.InvokeAsyncJobReq) (*schema.InvokeAsyncJobResp, error) {
 
 	keyword := req.Keyword
 	if keyword == "" {
 		keyword = uuid.New().String()
 	}
-	e, err := jc.NewEmployee(keyword, req.JobName, req.InputData)
+	e, err := c.NewEmployee(keyword, req.JobName, req.InputData)
 	if err != nil {
 		return nil, err
 	}
@@ -33,8 +33,8 @@ func (jc *JobCenter) InvokeAsyncJob(ctx context.Context,
 	return resp, nil
 }
 
-// GetAsyncJobs ...
-func (jc *JobCenter) GetAsyncJobs(ctx context.Context,
+// GetAsyncJobs 用于获取异步任务列表
+func (c *JobCenter) GetAsyncJobs(ctx context.Context,
 	req *schema.GetAsyncJobsReq) (*schema.GetAsyncJobsResp, error) {
 	if req.Keyword == "" && req.JobId == "" {
 		return nil, fmt.Errorf("wrong parameter")
@@ -52,8 +52,8 @@ func (jc *JobCenter) GetAsyncJobs(ctx context.Context,
 	return resp, nil
 }
 
-// QueryJobStatus ...
-func (jc *JobCenter) QueryJobStatus(ctx context.Context,
+// QueryJobStatus 用于查询异步任务状态
+func (c *JobCenter) QueryJobStatus(ctx context.Context,
 	flowID int64) (*schema.SbsJobInfo, error) {
 	var resp schema.SbsJobInfo
 	ret, err := GlobalStorage.GetByID(flowID)
@@ -72,8 +72,8 @@ func (jc *JobCenter) QueryJobStatus(ctx context.Context,
 	return &resp, nil
 }
 
-// RestartJob ...
-func (jc *JobCenter) RestartJob(ctx context.Context, req *schema.RestartJobReq) error {
+// RestartJob 用于重启异步任务，可以指定步骤
+func (c *JobCenter) RestartJob(ctx context.Context, req *schema.RestartJobReq) error {
 	keyword := req.KeyWord
 	step := req.Step
 
