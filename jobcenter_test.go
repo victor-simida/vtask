@@ -99,7 +99,6 @@ type mockRow struct {
 	name   string
 	input  string
 	resp   string
-	host   string
 }
 
 type mockStorage struct {
