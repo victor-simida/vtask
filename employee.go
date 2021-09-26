@@ -104,7 +104,6 @@ func (e *Employee) Do() {
 	if e.job.SuccessCallback != nil {
 		e.job.SuccessCallback(e.input)
 	}
-	return
 }
 
 // Record ...
